@@ -1,0 +1,29 @@
+Таблица лексем:
+01 fi(0)(i(1):t,i(2):t)>t
+02 i(3):t=i(1)vl(4)v(l(4)vi(2));
+03 i(3):t;
+04 ri(3);
+05 e
+07 fm(5)()>t
+08 i(6):t;
+09 a:l(7)|i(8)
+10 e
+11 pl(9);
+12 rl(7);
+13 e
+15 fi(10)()>d
+16 e
+
+Таблица идентификаторов:
+ИМЯТИПИНДЕКС_ТЛЗНАЧЕНИЕОБЛ_ВИДИМОСТИ
+fu, TEXT, FUNC, 1, NULL, global
+x, NUMBER, PARM, 3, 0, fu
+y, TEXT, PARM, 7, NULL, fu
+z, NUMBER, VAR, 13, 0, fu
+2, NUMBER, LIT, 19, 2, global
+main, NUMBER, FUNC, 36, 0, global
+u3232, NUMBER, VAR, 41, 0, main
+3, NUMBER, LIT, 47, 3, global
+i, NUMBER, VAR, 49, 0, main#0
+"привет", TEXT, LIT, 52, NULL, global
+f1, VOID, FUNC, 59, , global

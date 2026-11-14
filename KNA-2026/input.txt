@@ -1,0 +1,17 @@
+fn fu(x:number,y:text)->text
+z:number=x * 2 + (2 + y);
+z:number;
+ret z;
+end
+
+fn main()->number
+u3232 : number;
+repeat : 3 as i
+end
+project "привет";
+ret 3;
+end
+
+fn f1()->void
+end
+
