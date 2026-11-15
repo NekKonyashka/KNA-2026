@@ -48,6 +48,27 @@ namespace IT {
 		return TI_NULLIDX;
 	}
 
+	void AddLibrary(IdTable& idtable) {
+		Entry e;
+		e.idxfirstLE = -1;                
+		e.iddatatype = INT;
+		e.idtype = F;
+		e.scope = "";
+		for (int k = 0; k < IT_MAXPARAMS; k++) e.value.vfunc.types[k] = UNDEF;
+
+		e.id = "power";                    
+		e.value.vfunc.paramCount = 2;
+		e.value.vfunc.types[0] = INT;
+		e.value.vfunc.types[1] = INT;
+		Add(idtable, e);
+
+		e.id = "extent";                   
+		e.value.vfunc.paramCount = 1;
+		e.value.vfunc.types[0] = STR;
+		Add(idtable, e);
+	}
+
+
 	void Delete(IdTable& idtable) {
 		delete[] idtable.table;
 		idtable.maxsize = 0;

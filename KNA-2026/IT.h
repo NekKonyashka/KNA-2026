@@ -7,6 +7,7 @@
 #define TI_STR_DEFAULT	0x00
 #define TI_NULLIDX		0xffffffff
 #define TI_STR_MAXSIZE  255
+#define IT_MAXPARAMS 8
 
 namespace IT
 {
@@ -31,6 +32,11 @@ namespace IT
 				unsigned char len;
 				char str[TI_STR_MAXSIZE + 1];
 			} vstr;
+			struct                      
+			{
+				int paramCount;            
+				IDDATATYPE types[IT_MAXPARAMS];
+			} vfunc;
 		} value;
 	};
 
@@ -49,6 +55,6 @@ namespace IT
 
 	int IsId(IdTable& idtable, std::string id,std::string scope);
 	int FindVisible(IdTable& it, std::vector<std::string> &scopes, std::string name);
-
+	void AddLibrary(IdTable& idtable);   
 	void Delete(IdTable& idtable);
 };

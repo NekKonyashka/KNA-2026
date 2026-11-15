@@ -30,7 +30,7 @@ namespace LT {
 		lextable.size++;
 	}
 
-	Entry GetEntry(LexTable& lextable, int n) {
+	Entry& GetEntry(LexTable& lextable, int n) {
 		if (n < lextable.size && n >= 0) {
 			return lextable.table[n];
 		}

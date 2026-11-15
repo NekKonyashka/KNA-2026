@@ -5,28 +5,40 @@
 namespace POLISH {
     static int GetPrioritet(char op) {
         switch (op) {
-        case '#':
         case '/':
-        case '*': {
+        case '*': 
+        case '#': 
             return 3;
-        }
         case '+':
-        case '-': {
+        case '-':
             return 2;
-        }
-        default: {
+        default:
             return 0;
         }
+    }
+    static int Prio(LT::Entry& e) {
+        return e.params == 1 ? 4 : GetPrioritet(e.op); 
+    }
+
+    static bool IsCallStmtStart(LT::LexTable& lt, int i) {
+        int p = i - 1;
+        while (p >= 0 && lt.table[p].lexema == LEX_FILL) {
+            p--;
         }
+        if (p < 0) return false;
+
+        char c = lt.table[p].lexema;
+        return c == LEX_SEMICOLON || c == LEX_END || c == LEX_NUMBER || c == LEX_VOID;
     }
 
     bool CheckExpressions(LT::LexTable& lt, IT::IdTable& it) {
         for (int i = 0; i < lt.size; i++) {
-            if (LT::GetEntry(lt, i).lexema == LEX_EQUALS) {
-                if (!PolishNotation(i + 1, lt, it)) {
-                    return false;
-                }
-            }
+            char l = lt.table[i].lexema;
+            int start = -1;
+            if (l == LEX_EQUALS || l == LEX_ASSIGN || l == LEX_PROJECT || l == LEX_RETURN) start = i + 1;
+            else if (l == LEX_ID && i + 1 < lt.size && lt.table[i + 1].lexema == LEX_LEFTHESIS && IsCallStmtStart(lt, i))
+                start = i;
+            if (start >= 0 && !PolishNotation(start, lt, it)) return false;
         }
         return true;
     }
@@ -67,12 +79,21 @@ namespace POLISH {
                 break;
             }
             case LEX_PLUS: {
-                int cur = GetPrioritet(e.op);
-                while (!st.empty() && st.top().lexema == LEX_PLUS && GetPrioritet(st.top().op) >= cur) {
+                LT::Entry v = e;
+                char pl = (i > lex_pos) ? lt.table[i - 1].lexema : '\0';
+                bool unary = (i == lex_pos) || pl == LEX_LEFTHESIS || pl == LEX_COMMA || pl == LEX_PLUS;
+                if (unary) {
+                    v.params = 1; 
+                    st.push(v); 
+                    break; 
+                }
+                v.params = -1;
+                int cur = GetPrioritet(v.op);
+                while (!st.empty() && st.top().lexema == LEX_PLUS && Prio(st.top()) >= cur) {
                     out.push_back(st.top());
                     st.pop();
                 }
-                st.push(e);
+                st.push(v);
                 break;
             }
             case LEX_RIGHTHESIS: {

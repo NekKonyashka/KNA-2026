@@ -1,7 +1,6 @@
 fn fu(x:number,y:text)->text
-z:number=x * 2 + (2 + y);
-z:number;
-ret z;
+z:number=-x;
+ret 'sasa';
 end
 
 fn main()->number

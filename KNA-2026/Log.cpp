@@ -76,7 +76,7 @@ namespace Log {
 	void Log::WriteLexTable(LOG log, LT::LexTable& lextable)
 	{
 		int currentLine = 1;
-		*log.stream << "Таблица лексем:\n";
+		*log.stream << "\n\nТаблица лексем:\n";
 		*log.stream << std::setw(2) << std::setfill('0') << currentLine << " ";
 		for (int i = 0; i < lextable.size; i++) {
 			if (lextable.table[i].sn != currentLine) {

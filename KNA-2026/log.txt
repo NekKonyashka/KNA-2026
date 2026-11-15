@@ -1,29 +1,44 @@
 Òàáëèöà ëåêñåì:
-01 fi(0)(i(1):t,i(2):t)>t
-02 i(3):t=i(1)vl(4)v(l(4)vi(2));
-03 i(3):t;
-04 ri(3);
-05 e
-07 fm(5)()>t
-08 i(6):t;
-09 a:l(7)|i(8)
-10 e
-11 pl(9);
-12 rl(7);
-13 e
-15 fi(10)()>d
-16 e
+01 fi(2)(i(3):t,i(4):t)>t
+02 i(5):t=vi(3);
+03 rl(6);
+04 e
+06 fm(7)()>t
+07 i(8):t;
+08 a:l(9)|i(10)
+09 e
+10 pl(11);
+11 rl(9);
+12 e
+14 fi(12)()>d
+15 e
 
 Òàáëèöà èäåíòèôèêàòîðîâ:
 ÈÌßÒÈÏÈÍÄÅÊÑ_ÒËÇÍÀ×ÅÍÈÅÎÁË_ÂÈÄÈÌÎÑÒÈ
+power, NUMBER, FUNC, -1, 2, global
+extent, NUMBER, FUNC, -1, 1, global
 fu, TEXT, FUNC, 1, NULL, global
 x, NUMBER, PARM, 3, 0, fu
 y, TEXT, PARM, 7, NULL, fu
 z, NUMBER, VAR, 13, 0, fu
-2, NUMBER, LIT, 19, 2, global
-main, NUMBER, FUNC, 36, 0, global
-u3232, NUMBER, VAR, 41, 0, main
-3, NUMBER, LIT, 47, 3, global
-i, NUMBER, VAR, 49, 0, main#0
-"ïðèâåò", TEXT, LIT, 52, NULL, global
-f1, VOID, FUNC, 59, , global
+'sasa', TEXT, LIT, 21, NULL, global
+main, NUMBER, FUNC, 25, 0, global
+u3232, NUMBER, VAR, 30, 0, main
+3, NUMBER, LIT, 36, 3, global
+i, NUMBER, VAR, 38, 0, main#0
+"ïðèâåò", TEXT, LIT, 41, NULL, global
+f1, VOID, FUNC, 48, , global
+Òàáëèöà ëåêñåì:
+01 fi(2)(i(3):t,i(4):t)>t
+02 i(5):t=i(3)v;
+03 rl(6);
+04 e
+06 fm(7)()>t
+07 i(8):t;
+08 a:l(9)|i(10)
+09 e
+10 pl(11);
+11 rl(9);
+12 e
+14 fi(12)()>d
+15 e

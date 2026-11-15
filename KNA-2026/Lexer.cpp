@@ -646,6 +646,9 @@ namespace LEX {
 				if (c == '\'' || c == '\"') {
 					ERROR_THROW(122); 
 				}
+				if (c >= '0' && c <= '9') {
+					ERROR_THROW(123);
+				}
 				ERROR_THROW(119);
 			}
 		}
