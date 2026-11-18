@@ -92,6 +92,14 @@ namespace Log {
 		}
 	}
 
+	void WriteWarning(LOG log, Error::ERROR warning) {
+		if (!log.stream->is_open()) {
+			ERROR_THROW(112);
+		}
+		*log.stream << "\nПредупреждение: ID - " << warning.id << ": " << warning.messages
+			<< ",номер строки - " << warning.inext.line << ",номер столбца - " << warning.inext.col;
+	}
+
 	void Log::WriteIdTable(LOG log, IT::IdTable& idtable)
 	{
 		int currentLine = 1;
@@ -144,22 +152,31 @@ namespace Log {
 
 
 
-			switch (ent.iddatatype) {
-			case IT::INT: {
-				*log.stream << ent.value.vint.val;
-				break;
-			}
-			case IT::STR: {
-				if (ent.value.vstr.len == 0) {
-					*log.stream << "NULL";
+			if (ent.idtype == IT::F) {
+				*log.stream << "Число параметров функции: " << ent.value.vfunc.paramCount;
+				for (int j = 0; j < ent.value.vfunc.paramCount && j < TI_MAXPARAMS; j++) {
+					*log.stream << (j == 0 ? " (" : ", ")
+						<< (ent.value.vfunc.types[j] == IT::INT ? "NUMBER" : ent.value.vfunc.types[j] == IT::STR ? "TEXT" : "UNDEF");
 				}
-				for (int j = 0; ent.value.vstr.str[j] != '\0'; j++)
-				{
-					*log.stream << ent.value.vstr.str[j];
+				if (ent.value.vfunc.paramCount > 0) *log.stream << ")";
+			}
+			else
+				switch (ent.iddatatype) {
+				case IT::INT: {
+					*log.stream << ent.value.vint.val;
+					break;
 				}
-				break;
-			}
-			}
+				case IT::STR: {
+					if (ent.value.vstr.len == 0) {
+						*log.stream << "NULL";
+					}
+					for (int j = 0; ent.value.vstr.str[j] != '\0'; j++)
+					{
+						*log.stream << ent.value.vstr.str[j];
+					}
+					break;
+				}
+				}
 			*log.stream << ", " << (ent.scope == "" ? "global" : ent.scope);
 
 			*log.stream << std::endl;

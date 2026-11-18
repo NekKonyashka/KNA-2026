@@ -36,13 +36,14 @@ namespace LT
     struct Entry
     {
         char lexema;
-        int sn;
+        int sn;               
+        int col;
         unsigned int idxTi;
         char op;
-        int params;
-
-        Entry() { lexema = '\0'; sn = -1; idxTi = LT_TI_NULLIDX; op = LT_TI_NULLIDX; params = LT_TI_NULLIDX;};
-        Entry(char l, int sn, unsigned int idxti = LT_TI_NULLIDX,char op = '\0', int params = -1);
+        int params;           
+        
+        Entry() { lexema = '\0'; sn = -1; idxTi = LT_TI_NULLIDX; op = LT_TI_NULLIDX; params = LT_TI_NULLIDX; col = -1; };
+        Entry(char l, int sn, unsigned int idxti = LT_TI_NULLIDX, char op = '\0', int params = -1, int col = -1);
     };
 
     struct LexTable
@@ -54,6 +55,6 @@ namespace LT
 
     LexTable Create(int size);
     void Add(LexTable& lextable, Entry entry);
-    Entry& GetEntry(LexTable& lextable, int n);
+    Entry GetEntry(LexTable& lextable, int n);
     void Delete(LexTable& lextable);
 };

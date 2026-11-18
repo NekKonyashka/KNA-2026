@@ -10,5 +10,5 @@ namespace LEX {
 		IT::IdTable idtable;
 	};
 
-	lexer LexAnaliz(LT::LexTable& lt, IT::IdTable& it, std::vector<std::pair<std::string, int>>& words);
+	lexer LexAnaliz(LT::LexTable& lt, IT::IdTable& it, std::vector<In::WORD>& words);
 }

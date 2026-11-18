@@ -19,6 +19,7 @@ namespace Log {
 	void WriteParm(LOG log, Parm::PARM parm);
 	void WriteIn(LOG log, In::IN in);
 	void WriteError(LOG log, Error::ERROR error);
+	void WriteWarning(LOG log, Error::ERROR warning);
 	void WriteLexTable(LOG log, LT::LexTable& lextable);
 	void WriteIdTable(LOG log, IT::IdTable& idtable);
 	void Close(LOG log);

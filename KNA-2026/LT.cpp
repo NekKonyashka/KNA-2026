@@ -3,12 +3,13 @@
 
 namespace LT {
 
-	Entry::Entry(char l, int sn, unsigned int idxti,char op,int paramsCount){
+	Entry::Entry(char l, int sn, unsigned int idxti, char op, int paramsCount, int col) {
 		lexema = l;
 		this->sn = sn;
 		idxTi = idxti;
 		this->op = op;
 		params = paramsCount;
+		this->col = col;
 	}
 
 	LexTable Create(int size) {
@@ -30,7 +31,7 @@ namespace LT {
 		lextable.size++;
 	}
 
-	Entry& GetEntry(LexTable& lextable, int n) {
+	Entry GetEntry(LexTable& lextable, int n) {
 		if (n < lextable.size && n >= 0) {
 			return lextable.table[n];
 		}

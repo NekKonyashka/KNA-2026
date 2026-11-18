@@ -369,28 +369,29 @@ namespace LEX {
 		overflow = false;
 		for (char c : d) {
 			value = value * base + (c - '0');
-			if (value > 2147483647LL) { 
+			if (value > INT_MAX) { 
 				overflow = true; 
 				break; 
 			}
 		}
-		return overflow ? 2147483647LL : value;
+		return overflow ? INT_MAX : value;
 	}
 
-	int AddIDtoTable(IT::IdTable& it, LT::LexTable& lt, int ind, std::vector<std::pair<std::string, int>>& words) {
-		std::string name = words[ind].first;
-		LT::Entry prev = (lt.size > 0) ? LT::GetEntry(lt, lt.size - 1) : LT::Entry{};  
+
+	int AddIDtoTable(IT::IdTable& it, LT::LexTable& lt, int ind, std::vector<In::WORD>& words) {
+		std::string name = words[ind].str;
+		LT::Entry prev = (lt.size > 0) ? LT::GetEntry(lt, lt.size - 1) : LT::Entry{};
 
 		int idx;
 		if (prev.lexema == LEX_FUNCTION) {
 			idx = IT::IsId(it, name, "");
 		}
 		else {
-			idx = IT::FindVisible(it, scopes, name);        
+			idx = IT::FindVisible(it, scopes, name);
 		}
 
 		if (idx == TI_NULLIDX) {
-			int firstLex = lt.size;                    
+			int firstLex = lt.size;
 			IT::Entry ent;
 			switch (prev.lexema) {
 			case LEX_FUNCTION: {
@@ -427,13 +428,13 @@ namespace LEX {
 		return idx;
 	}
 
-	void SetType(IT::IdTable& it, LT::LexTable& lt,int ind, std::vector<std::pair<std::string, int>>& words) {
+	void SetType(IT::IdTable& it, LT::LexTable& lt, int ind, std::vector<In::WORD>& words) {
 		if (lt.size < 3) return;
 		int pos = lt.size - 3;
 		auto lt_ent = LT::GetEntry(lt, pos);
-		char before = LT::GetEntry(lt, lt.size - 2).lexema;   
+		char before = LT::GetEntry(lt, lt.size - 2).lexema;
 		IT::Entry* ent = nullptr;
-		if (before == LEX_COLON && lt_ent.lexema == LEX_ID) {          
+		if (before == LEX_COLON && lt_ent.lexema == LEX_ID) {
 			ent = &IT::GetEntry(it, lt_ent.idxTi);
 		}
 		else if (before == LEX_ARROW && lt_ent.lexema == LEX_RIGHTHESIS) {
@@ -441,8 +442,12 @@ namespace LEX {
 				if (--pos < 0) return;
 				lt_ent = LT::GetEntry(lt, pos);
 			} while (lt_ent.lexema != LEX_FUNCTION && lt_ent.lexema != LEX_MAIN);
-			if (lt_ent.lexema == LEX_MAIN) return;
-			ent = &IT::GetEntry(it, LT::GetEntry(lt, pos + 1).idxTi);
+			if (lt_ent.lexema == LEX_MAIN) {
+				ent = &IT::GetEntry(it, lt_ent.idxTi);                
+			}
+			else {
+				ent = &IT::GetEntry(it, LT::GetEntry(lt, pos + 1).idxTi);
+			}
 		}
 		else {
 			return;
@@ -451,206 +456,211 @@ namespace LEX {
 		if (ent->iddatatype != IT::UNDEF) {
 			return;
 		}
-		if (words[ind].first == _NUMBER) {
+		if (words[ind].str == _NUMBER) {
 			ent->iddatatype = IT::INT;
 		}
-		else if (words[ind].first == _TEXT) {
+		else if (words[ind].str == _TEXT) {
 			ent->iddatatype = IT::STR;
 		}
-		else if (words[ind].first == _VOID) {
+		else if (words[ind].str == _VOID) {
 			ent->iddatatype = IT::VOID;
 		}
 	}
 
-	lexer LexAnaliz(LT::LexTable& lextable, IT::IdTable& idtable, std::vector<std::pair<std::string, int>>& words) {
+	lexer LexAnaliz(LT::LexTable& lextable, IT::IdTable& idtable, std::vector<In::WORD>& words) {
 		for (int i = 0; i < words.size(); i++)
 		{
-			if (Check(words[i].first, typeNumber))
+			if (Check(words[i].str, typeNumber))
 			{
-				LT::Entry ent = { LEX_NUMBER, words[i].second };
-				LT::Add(lextable, ent);
-				SetType(idtable, lextable,i, words);
-			}
-			else if (Check(words[i].first, typeText))
-			{
-				LT::Entry ent = { LEX_TEXT,  words[i].second };
+				LT::Entry ent = { LEX_NUMBER, words[i].line };
 				LT::Add(lextable, ent);
 				SetType(idtable, lextable, i, words);
 			}
-			else if (Check(words[i].first, typeVoid))
+			else if (Check(words[i].str, typeText))
 			{
-				LT::Entry ent = { LEX_VOID,  words[i].second };
+				LT::Entry ent = { LEX_TEXT,  words[i].line };
 				LT::Add(lextable, ent);
 				SetType(idtable, lextable, i, words);
 			}
-			else if (Check(words[i].first, typeFunction))
+			else if (Check(words[i].str, typeVoid))
 			{
-				LT::Entry ent = { LEX_FUNCTION,  words[i].second };
+				LT::Entry ent = { LEX_VOID,  words[i].line };
+				LT::Add(lextable, ent);
+				SetType(idtable, lextable, i, words);
+			}
+			else if (Check(words[i].str, typeFunction))
+			{
+				LT::Entry ent = { LEX_FUNCTION,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeAs))
+			else if (Check(words[i].str, typeAs))
 			{
-				LT::Entry ent = { LEX_AS,  words[i].second };
+				LT::Entry ent = { LEX_AS,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeAssign))
+			else if (Check(words[i].str, typeAssign))
 			{
-				LT::Entry ent = { LEX_ASSIGN,  words[i].second };
+				LT::Entry ent = { LEX_ASSIGN,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeArrow))
+			else if (Check(words[i].str, typeArrow))
 			{
 				inHeader = false;
-				LT::Entry ent = { LEX_ARROW,  words[i].second };
+				LT::Entry ent = { LEX_ARROW,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeRepeat))
+			else if (Check(words[i].str, typeRepeat))
 			{
 				scopes.push_back(scopes.back() + "#" + std::to_string(loopCounter++));
-				LT::Entry ent = { LEX_REPEAT,  words[i].second };
+				LT::Entry ent = { LEX_REPEAT,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeCapture))
+			else if (Check(words[i].str, typeCapture))
 			{
-				LT::Entry ent = { LEX_CAPTURE,  words[i].second };
+				LT::Entry ent = { LEX_CAPTURE,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeEnd))
+			else if (Check(words[i].str, typeEnd))
 			{
-				LT::Entry ent = { LEX_END,  words[i].second };
+				LT::Entry ent = { LEX_END,  words[i].line };
 				if (scopes.size() >= 1) {
 					scopes.pop_back();
 				}
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeProject))
+			else if (Check(words[i].str, typeProject))
 			{
-				LT::Entry ent = { LEX_PROJECT,  words[i].second };
+				LT::Entry ent = { LEX_PROJECT,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeReturn))
+			else if (Check(words[i].str, typeReturn))
 			{
-				LT::Entry ent = { LEX_RETURN,  words[i].second };
+				LT::Entry ent = { LEX_RETURN,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeMain))
+			else if (Check(words[i].str, typeMain))
 			{
-				unsigned int idx = IT::IsId(idtable, words[i].first, "");
+				unsigned int idx = IT::IsId(idtable, words[i].str, "");
 				if (idx == TI_NULLIDX) {
-					IT::Entry it_ent = { lextable.size, words[i].first, IT::IDDATATYPE::INT, IT::IDTYPE::F, "" };
+					IT::Entry it_ent = { lextable.size, words[i].str, IT::IDDATATYPE::UNDEF, IT::IDTYPE::F, "" };
 					IT::Add(idtable, it_ent);
 					idx = idtable.size - 1;
 				}
-				LT::Entry ent = { LEX_MAIN, words[i].second, idx };
+				LT::Entry ent = { LEX_MAIN, words[i].line, idx };
 				LT::Add(lextable, ent);
 				scopes.push_back("main");
 				inHeader = true;
 			}
-			else if (Check(words[i].first, typeStringLiteral))
+			else if (Check(words[i].str, typeStringLiteral))
 			{
-				if (words[i].first.size() - 2 > 255) {
-					ERROR_THROW(120)
+				if (words[i].str.size() - 2 > 255) {
+					ERROR_THROW_IN(120, words[i].line, words[i].col)
 				}
-				unsigned int idx = IT::IsId(idtable, words[i].first, "");
-				IT::Entry it_ent = { i,words[i].first,IT::IDDATATYPE::STR,IT::IDTYPE::L,"" };
+				unsigned int idx = IT::IsId(idtable, words[i].str, "");
 				if (idx == TI_NULLIDX) {
+					IT::Entry it_ent = { lextable.size, words[i].str, IT::IDDATATYPE::STR, IT::IDTYPE::L, "" };
+					std::string text = words[i].str.substr(1, words[i].str.size() - 2);      //            
+					it_ent.value.vstr.len = (unsigned char)text.size();
+					text.copy(it_ent.value.vstr.str, text.size());
+					it_ent.value.vstr.str[text.size()] = '\0';
 					idx = idtable.size;
 					IT::Add(idtable, it_ent);
 				}
-				LT::Entry ent = { LEX_LITERAL,  words[i].second, idx };
+				LT::Entry ent = { LEX_LITERAL,  words[i].line, idx };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeDecNumber) || 
-					 Check(words[i].first, typeBinNumber))
+			else if (Check(words[i].str, typeDecNumber) ||
+				Check(words[i].str, typeBinNumber))
 			{
 				bool overflow;
-				long long v = ParseInt(words[i].first, overflow);
-				std::string key = overflow ? words[i].first : std::to_string(v);  
+				long long v = ParseInt(words[i].str, overflow);
+				std::string key = overflow ? words[i].str : std::to_string(v);
 				unsigned int idx = IT::IsId(idtable, key, "");
 				if (idx == TI_NULLIDX) {
 					IT::Entry it_ent = { lextable.size, key, IT::IDDATATYPE::INT, IT::IDTYPE::L, "" };
 					it_ent.value.vint.val = (int)v;
-					it_ent.value.vint.overflow = overflow;         
+					it_ent.value.vint.overflow = overflow;
 					IT::Add(idtable, it_ent);
 					idx = idtable.size - 1;
 				}
-				LT::Entry ent = { LEX_LITERAL, words[i].second, idx };
+				LT::Entry ent = { LEX_LITERAL, words[i].line, idx };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeRightThesis))
+			else if (Check(words[i].str, typeRightThesis))
 			{
-				LT::Entry ent = { LEX_RIGHTHESIS,  words[i].second };
+				LT::Entry ent = { LEX_RIGHTHESIS,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeLeftThesis))
+			else if (Check(words[i].str, typeLeftThesis))
 			{
-				LT::Entry ent = { LEX_LEFTHESIS,  words[i].second };
+				LT::Entry ent = { LEX_LEFTHESIS,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeSemicolon))
+			else if (Check(words[i].str, typeSemicolon))
 			{
-				LT::Entry ent = { LEX_SEMICOLON,  words[i].second };
+				LT::Entry ent = { LEX_SEMICOLON,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeColon))
+			else if (Check(words[i].str, typeColon))
 			{
-				LT::Entry ent = { LEX_COLON,  words[i].second };
+				LT::Entry ent = { LEX_COLON,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeComma))
+			else if (Check(words[i].str, typeComma))
 			{
-				LT::Entry ent = { LEX_COMMA,  words[i].second };
+				LT::Entry ent = { LEX_COMMA,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typePlus))
+			else if (Check(words[i].str, typePlus))
 			{
-				LT::Entry ent = { LEX_PLUS,  words[i].second,LT_TI_NULLIDX,'+'};
+				LT::Entry ent = { LEX_PLUS,  words[i].line,LT_TI_NULLIDX,'+' };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeMinus))
+			else if (Check(words[i].str, typeMinus))
 			{
-				LT::Entry ent = { LEX_MINUS,  words[i].second,LT_TI_NULLIDX,'-' };
+				LT::Entry ent = { LEX_MINUS,  words[i].line,LT_TI_NULLIDX,'-' };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeMulti))
+			else if (Check(words[i].str, typeMulti))
 			{
-				LT::Entry ent = { LEX_STAR,  words[i].second,LT_TI_NULLIDX,'*' };
+				LT::Entry ent = { LEX_STAR,  words[i].line,LT_TI_NULLIDX,'*' };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeDiv))
+			else if (Check(words[i].str, typeDiv))
 			{
-				LT::Entry ent = { LEX_DIRSLASH,  words[i].second,LT_TI_NULLIDX,'/' };
+				LT::Entry ent = { LEX_DIRSLASH,  words[i].line,LT_TI_NULLIDX,'/' };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeEquals))
+			else if (Check(words[i].str, typeEquals))
 			{
-				LT::Entry ent = { LEX_EQUALS,  words[i].second };
+				LT::Entry ent = { LEX_EQUALS,  words[i].line };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeMod))
+			else if (Check(words[i].str, typeMod))
 			{
-				LT::Entry ent = { LEX_SHARP,  words[i].second,LT_TI_NULLIDX,'#' };
+				LT::Entry ent = { LEX_SHARP,  words[i].line,LT_TI_NULLIDX,'#' };
 				LT::Add(lextable, ent);
 			}
-			else if (Check(words[i].first, typeIdentificator))
+			else if (Check(words[i].str, typeIdentificator))
 			{
-				if (words[i].first.size() > 32) {
-					ERROR_THROW(121);
+				if (words[i].str.size() > 32) {
+					ERROR_THROW_IN(121, words[i].line, words[i].col);
 				}
 				unsigned int idx = AddIDtoTable(idtable, lextable, i, words);
-				LT::Entry ent = { LEX_ID, words[i].second, idx };
+				LT::Entry ent = { LEX_ID, words[i].line, idx };
 				LT::Add(lextable, ent);
-				}
+			}
 			else {
-				char c = words[i].first[0];
+				char c = words[i].str[0];
 				if (c == '\'' || c == '\"') {
-					ERROR_THROW(122); 
+					ERROR_THROW_IN(122, words[i].line, words[i].col);
 				}
 				if (c >= '0' && c <= '9') {
-					ERROR_THROW(123);
+					ERROR_THROW_IN(123, words[i].line, words[i].col);
 				}
-				ERROR_THROW(119);
+				ERROR_THROW_IN(119, words[i].line, words[i].col);
 			}
+			lextable.table[lextable.size - 1].col = words[i].col;                              
 		}
 		std::cout << std::setfill(' ');
 		return { lextable,idtable };

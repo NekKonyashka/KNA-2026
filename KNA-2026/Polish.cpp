@@ -6,57 +6,94 @@ namespace POLISH {
     static int GetPrioritet(char op) {
         switch (op) {
         case '/':
-        case '*': 
-        case '#': 
+        case '*':
+        case '#': {
             return 3;
+        }
         case '+':
-        case '-':
+        case '-': {
             return 2;
-        default:
+        }
+        default: {
             return 0;
         }
-    }
-    static int Prio(LT::Entry& e) {
-        return e.params == 1 ? 4 : GetPrioritet(e.op); 
-    }
-
-    static bool IsCallStmtStart(LT::LexTable& lt, int i) {
-        int p = i - 1;
-        while (p >= 0 && lt.table[p].lexema == LEX_FILL) {
-            p--;
         }
-        if (p < 0) return false;
-
-        char c = lt.table[p].lexema;
-        return c == LEX_SEMICOLON || c == LEX_END || c == LEX_NUMBER || c == LEX_VOID;
     }
 
-    bool CheckExpressions(LT::LexTable& lt, IT::IdTable& it) {
-        for (int i = 0; i < lt.size; i++) {
-            char l = lt.table[i].lexema;
-            int start = -1;
-            if (l == LEX_EQUALS || l == LEX_ASSIGN || l == LEX_PROJECT || l == LEX_RETURN) start = i + 1;
-            else if (l == LEX_ID && i + 1 < lt.size && lt.table[i + 1].lexema == LEX_LEFTHESIS && IsCallStmtStart(lt, i))
-                start = i;
-            if (start >= 0 && !PolishNotation(start, lt, it)) return false;
+   
+    static int Prio(const LT::Entry& e) {
+        return e.params == 1 ? 4 : GetPrioritet(e.op);
+    }
+
+    static int FindSemicolon(LT::LexTable& lt, int from) {
+        for (int i = from; i < lt.size; i++) {
+            if (lt.table[i].lexema == LEX_SEMICOLON) {
+                return i;
+            }
         }
-        return true;
+        return lt.size;
     }
 
-    bool PolishNotation(int lex_pos, LT::LexTable& lt, IT::IdTable& it) {
+
+    static int SkipParens(LT::LexTable& lt, int i) {
+        int depth = 0;
+        for (; i < lt.size; i++) {
+            if (lt.table[i].lexema == LEX_LEFTHESIS) {
+                depth++;
+            }
+            else if (lt.table[i].lexema == LEX_RIGHTHESIS && --depth == 0) {
+                return i + 1;
+            }
+        }
+        return -1;
+    }
+
+    static int ExprEnd(LT::LexTable& lt, int i) {
+        for (;;) {
+            while (i < lt.size && lt.table[i].lexema == LEX_PLUS) {         
+                i++;
+            }
+            if (i >= lt.size) {
+                return -1;
+            }
+            char c = lt.table[i].lexema;
+            if (c == LEX_ID && i + 1 < lt.size && lt.table[i + 1].lexema == LEX_LEFTHESIS) {
+                i = SkipParens(lt, i + 1);                               
+            }
+            else if (c == LEX_LEFTHESIS) {
+                i = SkipParens(lt, i);                                 
+            }
+            else if (c == LEX_ID || c == LEX_LITERAL) {
+                i++;
+            }
+            else {
+                return -1;
+            }
+            if (i < 0) {
+                return -1;
+            }
+            if (i < lt.size && lt.table[i].lexema == LEX_PLUS) {         
+                i++;
+                continue;
+            }
+            return i;
+        }
+    }
+
+
+    static int Convert(LT::LexTable& lt, int from, int to, bool terminated) {
         std::stack<LT::Entry> st;
         std::stack<int> argc;
         std::vector<LT::Entry> out;
 
-        int i = lex_pos;
-        while (lt.table[i].lexema != LEX_SEMICOLON) {
+        for (int i = from; i < to; i++) {
             LT::Entry e = lt.table[i];
             switch (e.lexema) {
             case LEX_ID:
             case LEX_LITERAL: {
-                if (lt.table[i + 1].lexema == LEX_LEFTHESIS) {
-                    st.push(e);
-                    argc.push(lt.table[i + 2].lexema == LEX_RIGHTHESIS ? 0 : 1);
+                if (e.lexema == LEX_ID && i + 1 < to && lt.table[i + 1].lexema == LEX_LEFTHESIS) {
+                    st.push(e);                                           
+                    argc.push(i + 2 < to && lt.table[i + 2].lexema == LEX_RIGHTHESIS ? 0 : 1);
                 }
                 else {
                     out.push_back(e);
@@ -73,19 +110,19 @@ namespace POLISH {
                     st.pop();
                 }
                 if (st.empty() || argc.empty()) {
-                    return false;
+                    return -1;
                 }
                 argc.top()++;
                 break;
             }
             case LEX_PLUS: {
                 LT::Entry v = e;
-                char pl = (i > lex_pos) ? lt.table[i - 1].lexema : '\0';
-                bool unary = (i == lex_pos) || pl == LEX_LEFTHESIS || pl == LEX_COMMA || pl == LEX_PLUS;
+                char prev = i > from ? lt.table[i - 1].lexema : '\0';
+                bool unary = i == from || prev == LEX_LEFTHESIS || prev == LEX_COMMA || prev == LEX_PLUS;
                 if (unary) {
-                    v.params = 1; 
-                    st.push(v); 
-                    break; 
+                    v.params = 1;                                           
+                    st.push(v);
+                    break;
                 }
                 v.params = -1;
                 int cur = GetPrioritet(v.op);
@@ -102,10 +139,13 @@ namespace POLISH {
                     st.pop();
                 }
                 if (st.empty()) {
-                    return false;
+                    return -1;
                 }
                 st.pop();
-                if (!st.empty() && st.top().lexema == LEX_ID) {
+                if (!st.empty() && st.top().lexema == LEX_ID) {         
+                    if (argc.empty()) {
+                        return -1;
+                    }
                     out.push_back(st.top());
                     st.pop();
                     LT::Entry at = e;
@@ -117,26 +157,85 @@ namespace POLISH {
                 break;
             }
             default: {
-                return false;
+                return -1;
             }
             }
-            i++;
         }
         while (!st.empty()) {
             if (st.top().lexema == LEX_LEFTHESIS) {
-                return false;
+                return -1;
             }
             out.push_back(st.top());
             st.pop();
         }
-        out.push_back(lt.table[i]);
-        int k = lex_pos;
+
+        LT::Entry semicolon = terminated ? lt.table[to] : LT::Entry();
+        int k = from;
         for (auto& e : out) {
             lt.table[k++] = e;
         }
-        while (k <= i) {
+        int len = (int)out.size();
+        if (terminated) {
+            lt.table[k++] = semicolon;
+        }
+        while (k < to || (terminated && k <= to)) {
             lt.table[k].idxTi = LT_TI_NULLIDX;
             lt.table[k++].lexema = LEX_FILL;
+        }
+        return len;
+    }
+
+    bool PolishNotation(int lex_pos, LT::LexTable& lt, IT::IdTable& it) {
+        int semi = FindSemicolon(lt, lex_pos);
+        return semi < lt.size && Convert(lt, lex_pos, semi, true) >= 0;
+    }
+
+    bool CheckExpressions(LT::LexTable& lt, IT::IdTable& it) {
+        for (int i = 0; i < lt.size; i++) {
+            switch (lt.table[i].lexema) {
+            case LEX_EQUALS:        // i : t = E ;
+            case LEX_ASSIGN:        // i ~ E ;
+            case LEX_PROJECT:       // p E ;
+            case LEX_RETURN: {      // r E ;
+                int semi = FindSemicolon(lt, i + 1);
+                if (semi >= lt.size || Convert(lt, i + 1, semi, true) < 0) {
+                    return false;
+                }
+                i = semi;
+                break;
+            }
+            case LEX_REPEAT: {     
+                int from = i + 2;
+                int to = ExprEnd(lt, from);
+                if (to < 0) {
+                    return false;
+                }
+                int len = Convert(lt, from, to, false);
+                if (len < 0) {
+                    return false;
+                }
+                lt.table[i].params = len;
+                i = to - 1;
+                break;
+            }
+            case LEX_ID: {          
+                bool call = i + 1 < lt.size && lt.table[i + 1].lexema == LEX_LEFTHESIS;
+                bool header = i > 0 && lt.table[i - 1].lexema == LEX_FUNCTION;
+                if (call && !header) {
+                    int semi = FindSemicolon(lt, i);
+                    int len = semi < lt.size ? Convert(lt, i, semi, true) : -1;
+                    if (len < 0) {
+                        return false;
+                    }
+                    lt.table[i + len].params = i;     
+                    i = semi;
+                }
+                break;
+            }
+            default: {
+                break;
+            }
+            }
         }
         return true;
     }

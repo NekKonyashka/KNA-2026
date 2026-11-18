@@ -7,11 +7,11 @@
 #define TI_STR_DEFAULT	0x00
 #define TI_NULLIDX		0xffffffff
 #define TI_STR_MAXSIZE  255
-#define IT_MAXPARAMS 8
+#define TI_MAXPARAMS	8		
 
 namespace IT
 {
-	enum IDDATATYPE { UNDEF = 0, INT = 1, STR = 2,VOID = 3 };
+	enum IDDATATYPE { UNDEF = 0, INT = 1, STR = 2, VOID = 3 };
 	enum IDTYPE { V = 1, F = 2, P = 3, L = 4 };
 
 	struct Entry
@@ -32,10 +32,10 @@ namespace IT
 				unsigned char len;
 				char str[TI_STR_MAXSIZE + 1];
 			} vstr;
-			struct                      
+			struct						
 			{
-				int paramCount;            
-				IDDATATYPE types[IT_MAXPARAMS];
+				int paramCount;				
+				IDDATATYPE types[TI_MAXPARAMS];	
 			} vfunc;
 		} value;
 	};
@@ -53,8 +53,10 @@ namespace IT
 
 	Entry& GetEntry(IdTable& idtable, int n);
 
-	int IsId(IdTable& idtable, std::string id,std::string scope);
-	int FindVisible(IdTable& it, std::vector<std::string> &scopes, std::string name);
-	void AddLibrary(IdTable& idtable);   
+	int IsId(IdTable& idtable, std::string id, std::string scope);
+	int FindVisible(IdTable& it, std::vector<std::string>& scopes, std::string name);
+
+	void AddLibrary(IdTable& idtable);	
+
 	void Delete(IdTable& idtable);
 };

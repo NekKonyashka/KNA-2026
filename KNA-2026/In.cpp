@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace In {
-	IN getin(wchar_t infile[], std::vector<std::pair<std::string, int>>& words) {
+	IN getin(wchar_t infile[], std::vector<In::WORD>& words) {
 		std::ifstream file(infile, std::ios::binary);
 		words.clear();
 		if (!file.is_open()) {
@@ -25,17 +25,19 @@ namespace In {
 		file.read(buff, in.size);
 
 		char* t = new char[16];
-		int InPosText = 0, curPos = 1;
+		int InPosText = 0, lineStart = 0, wordCol = 0;   
 
 		for (int i = 0; i < in.size; ++i)
 		{
 			unsigned char ch = buff[i];
-			curPos++;
 			switch (in.code[ch]) {
 			case IN::F: {
-				ERROR_THROW_IN(111, in.lines, curPos);
+				ERROR_THROW_IN(111, in.lines, i - lineStart + 1);
 			}
 			case IN::T: {
+				if (temp.empty()) {
+					wordCol = i - lineStart + 1;   
+				}
 				temp += ch;
 				result[InPosText++] = ch;
 				break;
@@ -46,9 +48,10 @@ namespace In {
 			case IN::O:
 			case IN::S: {
 				if (temp != "") {
-					words.push_back({ temp, in.lines });
+					words.push_back({ temp, in.lines, wordCol });
 					temp = "";
 				}
+				int tokCol = i - lineStart + 1; 
 
 				if (ch == ' ' || ch == '\t') {
 					if (InPosText > 0 && result[InPosText - 1] != ' ' && result[InPosText - 1] != '\n') {
@@ -68,7 +71,7 @@ namespace In {
 
 				temp = ch;
 				if (ch == '\'' || ch == '\"') {
-					while(i + 1 < in.size && (buff[i + 1] != '\'' && buff[i + 1] != '\"')) {
+					while (i + 1 < in.size && (buff[i + 1] != '\'' && buff[i + 1] != '\"')) {
 						temp += buff[++i];
 					}
 					temp += buff[++i];
@@ -79,10 +82,9 @@ namespace In {
 					(ch == '-' && i + 1 < in.size && buff[i + 1] == '>')) {
 					temp += buff[i + 1];
 					++i;
-					++curPos;
 				}
 
-				words.push_back({ temp, in.lines });
+				words.push_back({ temp, in.lines, tokCol });
 				if (InPosText != 0 && result[InPosText - 1] != '\n' && result[InPosText - 1] != ' ') {
 					result[InPosText++] = ' ';
 				}
@@ -97,7 +99,7 @@ namespace In {
 			}
 			default: {
 				if (temp != "") {
-					words.push_back({ temp, in.lines });
+					words.push_back({ temp, in.lines, wordCol });
 					temp = "";
 				}
 				if (result[InPosText - 1] != ' ') {
@@ -110,13 +112,13 @@ namespace In {
 				}
 				in.lines++;
 				result[InPosText++] = ch;
-				curPos = 1;
+				lineStart = i + 1;   
 			}
 			}
 		}
 
 		if (temp != "") {
-			words.push_back({ temp, in.lines });
+			words.push_back({ temp, in.lines, wordCol });
 			temp = "";
 		}
 

@@ -1,11 +1,12 @@
 fn fu(x:number,y:text)->text
 z:number=-x;
-ret 'sasa';
+ret "dsd";
 end
 
 fn main()->number
 u3232 : number;
 repeat : 3 as i
+fu("dsds","dsds");
 end
 project "привет";
 ret 3;
