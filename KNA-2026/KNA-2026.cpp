@@ -1,18 +1,15 @@
-﻿#include"stdafx.h"
-
+﻿#include "stdafx.h"
 using namespace std;
 
-static void PrintDiag(const char* kind, const Error::ERROR& e)
-{
-    cout << kind << " " << e.id << ": " << e.messages;
-    if (e.inext.line >= 0) cout << ", строка " << e.inext.line;
-    if (e.inext.col >= 0) cout << ", позиция " << e.inext.col;
-    cout << endl;
-}
+//#define DO_TEST
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {
     setlocale(LC_ALL, "rus");
+#ifdef DO_TEST
+    TEST::DoTests("../../tests");
+#else
     vector<In::WORD> words;
     Parm::PARM parm;
     Log::LOG log = { L"",NULL };
@@ -56,29 +53,27 @@ int _tmain(int argc, _TCHAR* argv[])
 
             Log::WriteIdTable(log, idtab);              
             for (auto& w : diag.warnings) {
-                PrintDiag("Предупреждение", w);
                 Log::WriteWarning(log, w);
             }
             for (auto& e : diag.errors) {
-                PrintDiag("Ошибка", e);
                 Log::WriteError(log, e);
             }
             if (diag.errors.empty()) {
                 cout << "Семантический анализ завершён без ошибок\n";
             }
             else {
+                cout << "Семантическая ошибка\n";
                 Out::WriteToError(out, diag.errors[0]);
             }
         }
     }
     catch (Error::ERROR e) {
-        PrintDiag("Ошибка", e);
         cout << endl;
         Log::WriteError(log, e);
         out = Out::getout(parm.out);
         Out::WriteToError(out, e);
     }
-
+#endif
     system("pause");
     return 0;
 }

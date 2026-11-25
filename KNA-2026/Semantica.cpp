@@ -8,13 +8,16 @@
 namespace SEM {
 	namespace {
 
-		struct Operand { IT::IDDATATYPE type; bool isConst; int val; };
+		struct Operand { 
+			IT::IDDATATYPE type; 
+			bool isConst; 
+			int val; 
+		};
 
 		void Fail(int id, const LT::Entry& e) {
 			throw Error::geterrorin(id, e.sn, e.col);
 		}
 
-		// ошибка по записи ТИ: позиция берётся из первой лексемы идентификатора
 		void FailIT(int id, LT::LexTable& lt, const IT::Entry& e) {
 			if (e.idxfirstLE >= 0 && e.idxfirstLE < lt.size) {
 				Fail(id, lt.table[e.idxfirstLE]);
@@ -30,7 +33,6 @@ namespace SEM {
 			return n == "power" || n == "extent";
 		}
 
-		// предыдущая / следующая значащая лексема (заполнители пропускаются)
 		char PrevLex(LT::LexTable& lt, int i) {
 			while (--i >= 0) {
 				if (lt.table[i].lexema != LEX_FILL) return lt.table[i].lexema;

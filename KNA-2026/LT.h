@@ -4,6 +4,7 @@
 #define LT_TI_NULLIDX 0xffffffff
 #define LEX_VOID 'd'
 #define LEX_NUMBER 't'
+#define LEX_SMNUMBER 't'
 #define LEX_TEXT 't'
 #define LEX_ID 'i'
 #define LEX_LITERAL 'l'

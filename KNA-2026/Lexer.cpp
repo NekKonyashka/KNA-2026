@@ -10,6 +10,7 @@
 #define _NUMBER "number"
 #define _TEXT "text"
 #define _VOID "void"
+#define _SMNUMBER "smlnumber"
 
 namespace LEX {
 	FST::FST typeNumber((char*)"", 7,
@@ -19,6 +20,18 @@ namespace LEX {
 		FST::NODE(1, FST::RELATION('b', 4)),
 		FST::NODE(1, FST::RELATION('e', 5)),
 		FST::NODE(1, FST::RELATION('r', 6)),
+		FST::NODE());
+
+	FST::FST typeSmallNumber((char*)"",10,
+		FST::NODE(1, FST::RELATION('s', 1)),
+		FST::NODE(1, FST::RELATION('m', 2)),
+		FST::NODE(1, FST::RELATION('l', 3)),
+		FST::NODE(1, FST::RELATION('n', 4)),
+		FST::NODE(1, FST::RELATION('u', 5)),
+		FST::NODE(1, FST::RELATION('m', 6)),
+		FST::NODE(1, FST::RELATION('b', 7)),
+		FST::NODE(1, FST::RELATION('e', 8)),
+		FST::NODE(1, FST::RELATION('r', 9)),
 		FST::NODE());
 
 	FST::FST typeText((char*)"", 5,
@@ -468,6 +481,9 @@ namespace LEX {
 	}
 
 	lexer LexAnaliz(LT::LexTable& lextable, IT::IdTable& idtable, std::vector<In::WORD>& words) {
+		inHeader = false;
+		scopes.assign(1, "");
+		loopCounter = 0;
 		for (int i = 0; i < words.size(); i++)
 		{
 			if (Check(words[i].str, typeNumber))

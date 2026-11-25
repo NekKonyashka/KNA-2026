@@ -1,19 +1,70 @@
-fn fu ( x : number , y : text ) -> text |1
-z : number = - x ; |2
-ret "dsd" ; |3
-end |4
- |5
-fn main ( ) -> number |6
-u3232 : number ; |7
-repeat : 3 as i |8
-fu ( "dsds" , "dsds" ) ; |9
-end |10
-project "привет" ; |11
-ret 3 ; |12
-end |13
- |14
-fn f1 ( ) -> void |15
-end |16
- |17
- |18Ошибка 309: Тип аргумента не соответствует типу параметра
-Строка 9 позиция 1
+ |1
+fn square ( a : number ) -> number |2
+squ : text = "adsas 'as' " ; |3
+ret a * a ; |4
+end |5
+ |6
+ |7
+ |8
+fn answer ( ) -> number |9
+ret 42 ; |10
+end |11
+ |12
+ |13
+fn mix ( a : number , b : number , s : text ) -> number |14
+k : number = power ( a , 2 ) + extent ( s ) # 3 ; |15
+k := k - b / ( a + 1 ) ; |16
+ret - k + square ( b ) ; |17
+end |18
+ |19
+ |20
+fn show ( s : text , n : number ) -> void |21
+repeat : n |22
+project s ; |23
+end |24
+ret ; |25
+end |26
+ |27
+ |28
+fn hello ( ) -> void |29
+project 'hello' ; |30
+end |31
+ |32
+ |33
+fn nothing ( ) -> void |34
+end |35
+ |36
+ |37
+fn main ( ) -> number |38
+x : number ; |39
+y : number = 101b ; |40
+z : number = 7 ; |41
+s : text = "строка" ; |42
+q : text = 'say "hi"' ; |43
+capture x ; |44
+capture s ; |45
+x := y * ( x + 1 ) - 10 / 2 # 3 ; |46
+y := answer ( ) ; |47
+project x ; |48
+project mix ( x , y + 1 , s ) ; |49
+project square ( square ( 2 ) ) ; |50
+show ( s , 3 ) ; |51
+hello ( ) ; |52
+nothing ( ) ; |53
+answer ( ) ; |54
+repeat : 3 |55
+project 'простой цикл' ; |56
+end |57
+repeat : x as i |58
+project i ; |59
+repeat : y as j |60
+project i + j ; |61
+end |62
+end |63
+repeat : 2 |64
+end |65
+repeat : 2 as k |66
+end |67
+ret 0 ; |68
+end |69
+ |70

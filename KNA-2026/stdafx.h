@@ -17,3 +17,4 @@
 #include <string>
 #include "Polish.h"
 #include "Semantica.h"
+#include "Test.h"

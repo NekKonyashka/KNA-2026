@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace In {
-	IN getin(wchar_t infile[], std::vector<In::WORD>& words) {
+	IN getin(wchar_t infile[], std::vector<WORD>& words) {
 		std::ifstream file(infile, std::ios::binary);
 		words.clear();
 		if (!file.is_open()) {
@@ -25,7 +25,7 @@ namespace In {
 		file.read(buff, in.size);
 
 		char* t = new char[16];
-		int InPosText = 0, lineStart = 0, wordCol = 0;   
+		int InPosText = 0, lineStart = 0, wordCol = 0;  
 
 		for (int i = 0; i < in.size; ++i)
 		{
@@ -51,7 +51,7 @@ namespace In {
 					words.push_back({ temp, in.lines, wordCol });
 					temp = "";
 				}
-				int tokCol = i - lineStart + 1; 
+				int tokCol = i - lineStart + 1;   
 
 				if (ch == ' ' || ch == '\t') {
 					if (InPosText > 0 && result[InPosText - 1] != ' ' && result[InPosText - 1] != '\n') {
@@ -71,10 +71,13 @@ namespace In {
 
 				temp = ch;
 				if (ch == '\'' || ch == '\"') {
-					while (i + 1 < in.size && (buff[i + 1] != '\'' && buff[i + 1] != '\"')) {
+					char quote = (char)ch;
+					while (i + 1 < in.size && buff[i + 1] != quote && buff[i + 1] != '\n' && buff[i + 1] != '\r') {
 						temp += buff[++i];
 					}
-					temp += buff[++i];
+					if (i + 1 < in.size && buff[i + 1] == quote) {
+						temp += buff[++i];
+					}
 				}
 
 
@@ -112,7 +115,7 @@ namespace In {
 				}
 				in.lines++;
 				result[InPosText++] = ch;
-				lineStart = i + 1;   
+				lineStart = i + 1; 
 			}
 			}
 		}

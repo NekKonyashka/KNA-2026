@@ -3,11 +3,13 @@
 #include <vector>
 #define ID_MAXSIZE		32
 #define TI_MAXSIZE		4096
-#define TI_INT_DEFAULT	0x00000000
-#define TI_STR_DEFAULT	0x00
+#define TI_NUMBER_DEFAULT	0x00000000
+#define TI_TEXT_DEFAULT	0x00
 #define TI_NULLIDX		0xffffffff
-#define TI_STR_MAXSIZE  255
-#define TI_MAXPARAMS	8		
+#define TI_TEXT_MAXSIZE  255
+#define TI_MAXPARAMS	8	
+#define TI_NUMBER_MAXSIZE 2147483647
+#define TI_SMNUMBER_MAXSIZE 32767
 
 namespace IT
 {
@@ -24,13 +26,13 @@ namespace IT
 		union
 		{
 			struct {
-				int val = TI_INT_DEFAULT;
+				int val = TI_NUMBER_DEFAULT;
 				bool overflow = false;
 			}vint = {};
 			struct
 			{
 				unsigned char len;
-				char str[TI_STR_MAXSIZE + 1];
+				char str[TI_TEXT_MAXSIZE + 1];
 			} vstr;
 			struct						
 			{
