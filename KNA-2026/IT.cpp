@@ -53,7 +53,7 @@ namespace IT {
 	void AddLibrary(IdTable& idtable) {
 		Entry e;
 		e.idxfirstLE = -1;					                                
-		e.iddatatype = INT;					
+		e.iddatatype = NUM;					
 		e.idtype = F;
 		e.scope = "";
 		for (int k = 0; k < TI_MAXPARAMS; k++) 
@@ -61,13 +61,13 @@ namespace IT {
 
 		e.id = "power";						
 		e.value.vfunc.paramCount = 2;
-		e.value.vfunc.types[0] = INT;
-		e.value.vfunc.types[1] = INT;
+		e.value.vfunc.types[0] = NUM;
+		e.value.vfunc.types[1] = NUM;
 		Add(idtable, e);
 
 		e.id = "extent";					
 		e.value.vfunc.paramCount = 1;
-		e.value.vfunc.types[0] = STR;
+		e.value.vfunc.types[0] = TXT;
 		Add(idtable, e);
 	}
 

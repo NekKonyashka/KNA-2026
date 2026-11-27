@@ -10,7 +10,7 @@
 #define _NUMBER "number"
 #define _TEXT "text"
 #define _VOID "void"
-#define _SMNUMBER "smlnumber"
+#define _SMNUMBER "smallnumber"
 
 namespace LEX {
 	FST::FST typeNumber((char*)"", 7,
@@ -22,16 +22,18 @@ namespace LEX {
 		FST::NODE(1, FST::RELATION('r', 6)),
 		FST::NODE());
 
-	FST::FST typeSmallNumber((char*)"",10,
+	FST::FST typeSmallNumber((char*)"", 12,
 		FST::NODE(1, FST::RELATION('s', 1)),
 		FST::NODE(1, FST::RELATION('m', 2)),
-		FST::NODE(1, FST::RELATION('l', 3)),
-		FST::NODE(1, FST::RELATION('n', 4)),
-		FST::NODE(1, FST::RELATION('u', 5)),
-		FST::NODE(1, FST::RELATION('m', 6)),
-		FST::NODE(1, FST::RELATION('b', 7)),
-		FST::NODE(1, FST::RELATION('e', 8)),
-		FST::NODE(1, FST::RELATION('r', 9)),
+		FST::NODE(1, FST::RELATION('a', 3)),
+		FST::NODE(1, FST::RELATION('l', 4)),
+		FST::NODE(1, FST::RELATION('l', 5)),
+		FST::NODE(1, FST::RELATION('n', 6)),
+		FST::NODE(1, FST::RELATION('u', 7)),
+		FST::NODE(1, FST::RELATION('m', 8)),
+		FST::NODE(1, FST::RELATION('b', 9)),
+		FST::NODE(1, FST::RELATION('e', 10)),
+		FST::NODE(1, FST::RELATION('r', 11)),
 		FST::NODE());
 
 	FST::FST typeText((char*)"", 5,
@@ -224,7 +226,7 @@ namespace LEX {
 			FST::RELATION('÷', 2), FST::RELATION('ø', 2), FST::RELATION('ù', 2), FST::RELATION('ú', 2),
 			FST::RELATION('û', 2), FST::RELATION('ü', 2), FST::RELATION('ý', 2), FST::RELATION('þ', 2),
 			FST::RELATION('ÿ', 2), FST::RELATION('¸', 2)),
-	    FST::NODE(258,
+		FST::NODE(258,
 			FST::RELATION('a', 1), FST::RELATION('b', 1), FST::RELATION('c', 1), FST::RELATION('d', 1),
 			FST::RELATION('e', 1), FST::RELATION('f', 1), FST::RELATION('g', 1), FST::RELATION('h', 1),
 			FST::RELATION('i', 1), FST::RELATION('j', 1), FST::RELATION('k', 1), FST::RELATION('l', 1),
@@ -292,7 +294,7 @@ namespace LEX {
 			FST::RELATION('0', 2), FST::RELATION('1', 2), FST::RELATION('2', 2), FST::RELATION('3', 2),
 			FST::RELATION('4', 2), FST::RELATION('5', 2), FST::RELATION('6', 2), FST::RELATION('7', 2),
 			FST::RELATION('8', 2), FST::RELATION('9', 2)),
-			FST::NODE());
+		FST::NODE());
 
 	FST::FST typeStringLiteral((char*)"", 4,
 		FST::NODE(2,
@@ -345,14 +347,14 @@ namespace LEX {
 	);
 
 	FST::FST typeDecNumber((char*)"", 2,
-		FST::NODE(19, 
-			FST::RELATION('1', 0), FST::RELATION('2', 0), 
-			FST::RELATION('3', 0), FST::RELATION('4', 0), FST::RELATION('5', 0), 
-			FST::RELATION('6', 0), FST::RELATION('7', 0), FST::RELATION('8', 0), 
-			FST::RELATION('9', 0), 
-			FST::RELATION('0', 1), FST::RELATION('1', 1), FST::RELATION('2', 1), 
-			FST::RELATION('3', 1), FST::RELATION('4', 1), FST::RELATION('5', 1), 
-			FST::RELATION('6', 1), FST::RELATION('7', 1), FST::RELATION('8', 1), 
+		FST::NODE(19,
+			FST::RELATION('1', 0), FST::RELATION('2', 0),
+			FST::RELATION('3', 0), FST::RELATION('4', 0), FST::RELATION('5', 0),
+			FST::RELATION('6', 0), FST::RELATION('7', 0), FST::RELATION('8', 0),
+			FST::RELATION('9', 0),
+			FST::RELATION('0', 1), FST::RELATION('1', 1), FST::RELATION('2', 1),
+			FST::RELATION('3', 1), FST::RELATION('4', 1), FST::RELATION('5', 1),
+			FST::RELATION('6', 1), FST::RELATION('7', 1), FST::RELATION('8', 1),
 			FST::RELATION('9', 1)),
 		FST::NODE());
 
@@ -367,27 +369,27 @@ namespace LEX {
 		return FST::execute(fst);
 	}
 	std::vector<std::string> scopes = { "" };
-	int loopCounter = 0;               
+	int loopCounter = 0;
 	std::string currentScope = "";
 	bool inHeader = false;
 
 	long long ParseInt(const std::string& s, bool& overflow) {
 		int base = 10;
 		std::string d = s;
-		if (d.back() == 'b') { 
-			base = 2; 
-			d.pop_back(); 
+		if (d.back() == 'b') {
+			base = 2;
+			d.pop_back();
 		}
 		long long value = 0;
 		overflow = false;
 		for (char c : d) {
 			value = value * base + (c - '0');
-			if (value > INT_MAX) { 
-				overflow = true; 
-				break; 
+			if (value > TI_NUMBER_MAXSIZE) {
+				overflow = true;
+				break;
 			}
 		}
-		return overflow ? INT_MAX : value;
+		return overflow ? TI_NUMBER_MAXSIZE : value;
 	}
 
 
@@ -422,7 +424,7 @@ namespace LEX {
 				break;
 			}
 			case LEX_AS: {
-				ent = { firstLex, name, IT::IDDATATYPE::INT, IT::IDTYPE::V, scopes.back() };
+				ent = { firstLex, name, IT::IDDATATYPE::NUM, IT::IDTYPE::V, scopes.back() };
 				break;
 			}
 			default: {
@@ -456,7 +458,7 @@ namespace LEX {
 				lt_ent = LT::GetEntry(lt, pos);
 			} while (lt_ent.lexema != LEX_FUNCTION && lt_ent.lexema != LEX_MAIN);
 			if (lt_ent.lexema == LEX_MAIN) {
-				ent = &IT::GetEntry(it, lt_ent.idxTi);                
+				ent = &IT::GetEntry(it, lt_ent.idxTi);
 			}
 			else {
 				ent = &IT::GetEntry(it, LT::GetEntry(lt, pos + 1).idxTi);
@@ -470,10 +472,13 @@ namespace LEX {
 			return;
 		}
 		if (words[ind].str == _NUMBER) {
-			ent->iddatatype = IT::INT;
+			ent->iddatatype = IT::NUM;
+		}
+		else if (words[ind].str == _SMNUMBER) {
+			ent->iddatatype = IT::SMNUM;
 		}
 		else if (words[ind].str == _TEXT) {
-			ent->iddatatype = IT::STR;
+			ent->iddatatype = IT::TXT;
 		}
 		else if (words[ind].str == _VOID) {
 			ent->iddatatype = IT::VOID;
@@ -488,13 +493,19 @@ namespace LEX {
 		{
 			if (Check(words[i].str, typeNumber))
 			{
-				LT::Entry ent = { LEX_NUMBER, words[i].line };
+				LT::Entry ent = { LEX_NUMBER, words[i].line, LT_TI_NULLIDX, (char)IT::NUM };      
+				LT::Add(lextable, ent);
+				SetType(idtable, lextable, i, words);
+			}
+			else if (Check(words[i].str, typeSmallNumber))
+			{
+				LT::Entry ent = { LEX_SMNUMBER, words[i].line, LT_TI_NULLIDX, (char)IT::SMNUM };
 				LT::Add(lextable, ent);
 				SetType(idtable, lextable, i, words);
 			}
 			else if (Check(words[i].str, typeText))
 			{
-				LT::Entry ent = { LEX_TEXT,  words[i].line };
+				LT::Entry ent = { LEX_TEXT,  words[i].line, LT_TI_NULLIDX, (char)IT::TXT };
 				LT::Add(lextable, ent);
 				SetType(idtable, lextable, i, words);
 			}
@@ -574,8 +585,8 @@ namespace LEX {
 				}
 				unsigned int idx = IT::IsId(idtable, words[i].str, "");
 				if (idx == TI_NULLIDX) {
-					IT::Entry it_ent = { lextable.size, words[i].str, IT::IDDATATYPE::STR, IT::IDTYPE::L, "" };
-					std::string text = words[i].str.substr(1, words[i].str.size() - 2);      //            
+					IT::Entry it_ent = { lextable.size, words[i].str, IT::IDDATATYPE::TXT, IT::IDTYPE::L, "" };
+					std::string text = words[i].str.substr(1, words[i].str.size() - 2);                  
 					it_ent.value.vstr.len = (unsigned char)text.size();
 					text.copy(it_ent.value.vstr.str, text.size());
 					it_ent.value.vstr.str[text.size()] = '\0';
@@ -593,7 +604,7 @@ namespace LEX {
 				std::string key = overflow ? words[i].str : std::to_string(v);
 				unsigned int idx = IT::IsId(idtable, key, "");
 				if (idx == TI_NULLIDX) {
-					IT::Entry it_ent = { lextable.size, key, IT::IDDATATYPE::INT, IT::IDTYPE::L, "" };
+					IT::Entry it_ent = { lextable.size, key, IT::IDDATATYPE::NUM, IT::IDTYPE::L, "" };
 					it_ent.value.vint.val = (int)v;
 					it_ent.value.vint.overflow = overflow;
 					IT::Add(idtable, it_ent);
@@ -676,7 +687,7 @@ namespace LEX {
 				}
 				ERROR_THROW_IN(119, words[i].line, words[i].col);
 			}
-			lextable.table[lextable.size - 1].col = words[i].col;                              
+			lextable.table[lextable.size - 1].col = words[i].col;
 		}
 		std::cout << std::setfill(' ');
 		return { lextable,idtable };

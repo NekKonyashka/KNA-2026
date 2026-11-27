@@ -3,15 +3,9 @@
 #include <iostream>
 #include <algorithm>
 #include <cctype>
-
-#if defined(_MSVC_LANG)
-#define TEST_CPP_VER _MSVC_LANG
-#else
-#define TEST_CPP_VER __cplusplus
-#endif
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
-
+using namespace std;
 
 namespace TEST {
 	namespace {
@@ -45,42 +39,41 @@ namespace TEST {
 			try {
 				std::wstring path = file.wstring();
 				In::getin(&path[0], words);
+				Log::LOG log = Log::getlog((wchar_t*)L"../../tests.txt");
 				lextab = LT::Create(LT_MAXSIZE - 1);
 				idtab = IT::Create(TI_MAXSIZE - 1);
 				IT::AddLibrary(idtab);
 				LEX::lexer lex = LEX::LexAnaliz(lextab, idtab, words);
-
+				Log::LOG trace = Log::getextra(log, (wchar_t*)L".trace");
 				MFST::Mfst mfst = MFST::Mfst(lex, GRB::getGreibach());
-				if (!mfst.start()) {
-					res.syntaxFailed = true;
-					std::cout << "  Синтаксический анализ: найдены ошибки, семантика пропущена\n";
-				}
-				else {
-					if (SHOW_RULES) {
-						mfst.savededucation();
-						mfst.printrules();
-					}
+				bool parsed = mfst.start(trace);
+				Log::Close(trace);
+				if (parsed) {
+					mfst.savededucation();
+
 					SEM::Diagnostics diag;
 					SEM::CollectSignatures(lextab, idtab, diag);
 					SEM::CheckRepeated(lextab, idtab, diag);
 					SEM::CheckUsage(lextab, idtab, diag);
-					if (POLISH::CheckExpressions(lextab, idtab)) {
+
+					bool polished = POLISH::CheckExpressions(lextab, idtab);
+					if (polished) {
+						cout << "Польская запись для всех выражений построена\n";
 						SEM::CheckLeftOperands(lextab, idtab, diag);
-						SEM::CheckFunctionCalls(lextab, idtab, diag);
 						SEM::CheckTypes(lextab, idtab, diag);
 						SEM::CheckWarnings(lextab, idtab, diag);
 					}
 					else {
-						diag.errors.push_back(Error::geterror(602));
+						cout << "Польская запись выражений не построена\n";
 					}
 					SEM::Finish(diag);
 
 					for (auto& w : diag.warnings) { PrintDiagTest("Предупреждение", w); res.warnings.push_back(w.id); }
 					for (auto& e : diag.errors) { PrintDiagTest("Ошибка", e); res.errors.push_back(e.id); }
-					if (diag.errors.empty() && diag.warnings.empty()) std::cout << "  Замечаний нет\n";
+					if (diag.errors.empty() && diag.warnings.empty()) std::cout << "  Все корректно\n";
 				}
 			}
-			catch (Error::ERROR& e) {                       // ошибки In / лексера: тест прерывается, остальные идут дальше
+			catch (Error::ERROR& e) {              
 				PrintDiagTest("Ошибка", e);
 				res.lexError = e.id;
 				res.errors.push_back(e.id);

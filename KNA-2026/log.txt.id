@@ -1,0 +1,19 @@
+¹    ÈÌ‗                               ÒÈÏ     ÂÈÄ   ÈÍÄÅÊÑ_ÒË  ÎÁËÀÑÒÜ_ÂÈÄÈÌÎÑÒÈ   ÇÍÀ×ÅÍÈÅ
+0    power                             NUMBER  FUNC  -1         global              ןאנאלוענמג: 2 (NUMBER, NUMBER)
+1    extent                            NUMBER  FUNC  -1         global              ןאנאלוענמג: 1 (TEXT)
+2    main                              NUMBER  FUNC  1          global              -
+3    x                                 TEXT    VAR   6          main                NULL
+4    '5'                               TEXT    LIT   10         global              5
+5    y                                 SMALLNUMBERVAR   12         main                0
+6    0                                 NUMBER  LIT   21         global              0
+7    f1                                VOID    FUNC  25         global              ןאנאלוענמג: 8 (NUMBER, NUMBER, NUMBER, NUMBER, NUMBER, NUMBER, NUMBER, NUMBER)
+8    x                                 NUMBER  PARM  27         f1                  0
+9    x1                                NUMBER  PARM  31         f1                  0
+10   x2                                NUMBER  PARM  35         f1                  0
+11   x3                                NUMBER  PARM  39         f1                  0
+12   x4                                NUMBER  PARM  43         f1                  0
+13   x5                                NUMBER  PARM  47         f1                  0
+14   x6                                NUMBER  PARM  51         f1                  0
+15   x7                                NUMBER  PARM  55         f1                  0
+16   x8                                NUMBER  PARM  59         f1                  0
+17   x9                                NUMBER  PARM  63         f1                  0

@@ -12,38 +12,33 @@ char rbuf[205], sbuf[1024], lbuf[1024];     // буферы для печати правила, стека 
 #define ISNS(n) GRB::Rule::Chain::isN(n)
 
 // начало шага: номер, правило, лента, стек
-#define MFST_TRACE1 std::cout << std::setw(4) << std::left << ++FST_TRACE_n << ": " \
+#define MFST_TRACE1 (*trace) << std::setw(4) << std::left << ++FST_TRACE_n << ": " \
     << std::setw(20) << std::left << rule.getCRule(rbuf, nrulechain) \
     << std::setw(30) << std::left << getCLenta(lbuf, lenta_position) \
     << std::setw(20) << std::left << getCSt(sbuf) \
     << std::endl;
 
 // продолжение шага: только лента и стек
-#define MFST_TRACE2 std::cout << std::setw(4) << std::left << FST_TRACE_n << ": " \
+#define MFST_TRACE2 (*trace) << std::setw(4) << std::left << FST_TRACE_n << ": " \
     << std::setw(20) << std::left << " " \
     << std::setw(30) << std::left << getCLenta(lbuf, lenta_position) \
     << std::setw(20) << std::left << getCSt(sbuf) \
     << std::endl;
 
 // шаг со сравнением терминала
-#define MFST_TRACE3 std::cout << std::setw(4) << std::left << ++FST_TRACE_n << ": " \
+#define MFST_TRACE3 (*trace) << std::setw(4) << std::left << ++FST_TRACE_n << ": " \
     << std::setw(20) << std::left << " " \
     << std::setw(30) << std::left << getCLenta(lbuf, lenta_position) \
     << std::setw(20) << std::left << getCSt(sbuf) \
     << std::endl;
 
 // сообщение с новым номером шага / с текущим номером
-#define MFST_TRACE4(c) std::cout << std::setw(4) << std::left << ++FST_TRACE_n << ": " \
+#define MFST_TRACE4(c) (*trace) << std::setw(4) << std::left << ++FST_TRACE_n << ": " \
     << std::setw(20) << std::left << c << std::endl;
-#define MFST_TRACE5(c) std::cout << std::setw(4) << std::left << FST_TRACE_n << ": " \
+#define MFST_TRACE5(c) (*trace) << std::setw(4) << std::left << FST_TRACE_n << ": " \
     << std::setw(20) << std::left << c << std::endl;
-#define MFST_TRACE6(c,k) std::cout << std::setw(4) << std::left << FST_TRACE_n << ": " \
+#define MFST_TRACE6(c,k) (*trace) << std::setw(4) << std::left << FST_TRACE_n << ": " \
     << std::setw(20) << std::left << c << k << std::endl;
-
-// вывод правила из сохранённого состояния (printrules)
-#define MFST_TRACE7 std::cout << std::setw(4) << std::left << state.lenta_position << ": " \
-    << std::setw(20) << std::left << rule.getCRule(rbuf, state.nrulechain) \
-    << std::endl;
 
 namespace MFST
 {
@@ -93,6 +88,7 @@ namespace MFST
     Mfst::Mfst()
     {
         lenta = 0;
+        trace = 0;
         lenta_size = lenta_position = 0;
         nrule = -1;
         nrulechain = -1;
@@ -110,6 +106,7 @@ namespace MFST
             lenta[k] = TS(lex.lextable.table[k].lexema);
         lenta[lenta_size - 1] = grebach.stbottomT;
 
+        trace = 0;
         lenta_position = 0;
         nrule = -1;
         nrulechain = -1;
@@ -244,13 +241,15 @@ namespace MFST
         return rc;
     }
 
-    bool Mfst::start()
+    bool Mfst::start(Log::LOG log)
     {
         bool rc = false;
+        trace = log.stream;
         RC_STEP rc_step = SURPRISE;
         char buf[MFST_DIAGN_MAXSIZE];
 
-        rc_step = step();
+        MFST_TRACE_START
+            rc_step = step();
         while (rc_step == NS_OK || rc_step == NS_NORULECHAIN || rc_step == TS_OK || rc_step == TS_NOK)
             rc_step = step();
 
@@ -259,20 +258,23 @@ namespace MFST
         case LENTA_END:
         {
             MFST_TRACE4("------>LENTA_END")
-                std::cout << "------------------------------------------------------------------------------------------" << std::endl;
+                (*trace) << "------------------------------------------------------------------------------------------" << std::endl;
             // номер строки последней настоящей лексемы (на ленте после неё стоит '$')
             int lines = (lenta_size >= 2) ? lex.lextable.table[lenta_size - 2].sn : 0;
-            std::cout << std::setw(4) << std::left << 0 << ": всего строк " << lines
+            (*trace) << std::setw(4) << std::left << 0 << ": всего строк " << lines
                 << ", синтаксический анализ выполнен без ошибок" << std::endl;
             rc = true;
             break;
         }
         case NS_NORULE:
             MFST_TRACE4("------>NS_NORULE")
-                std::cout << "------------------------------------------------------------------------------------------" << std::endl;
+                (*trace) << "------------------------------------------------------------------------------------------" << std::endl;
             for (short i = 0; i < MFST_DIAGN_NUMBER; i++)
                 if (*getDiagnosis(i, buf))
-                    std::cout << getDiagnosis(i, buf) << std::endl;
+                {
+                    (*trace) << getDiagnosis(i, buf) << std::endl;
+                    std::cout << getDiagnosis(i, buf) << std::endl;    // ошибки разбора видны и на консоли
+                }
             break;
         case NS_NORULECHAIN: MFST_TRACE4("------>NS_NORULENORULECHAIN") break;
         case NS_ERROR:       MFST_TRACE4("------>NS_ERROR") break;
@@ -293,19 +295,6 @@ namespace MFST
                 diagnosis[j].lenta_position = -1;
         }
         return rc;
-    }
-
-    // отладка: вывести правила, по которым выполнен разбор (после успешного start)
-    void Mfst::printrules()
-    {
-        MfstState state;
-        GRB::Rule rule;
-        for (unsigned short k = 0; k < storestate.size(); k++)
-        {
-            state = storestate.c[k];
-            rule = grebach.getRule(state.nrule);
-            MFST_TRACE7
-        }
     }
 
     // сохранить дерево вывода: номера правил и цепочек (понадобится для генерации кода)

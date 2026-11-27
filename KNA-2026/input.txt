@@ -1,69 +1,9 @@
-...функция с параметром, ret в конце
-fn square(a : number) -> number
-    squ: text = "adsas 'as' ";
-    ret a * a;
+fn main()->number
+x :text = '5';
+y : smallnumber;
+y := x;
+ret 0;
 end
 
-
-... функция без параметров, тело только из ret
-fn answer() -> number
-    ret 42;
-end
-
-... функция с несколькими параметрами, вызовы библиотеки, унарный минус
-fn mix(a : number, b : number, s : text) -> number
-    k : number = power(a, 2) + extent(s) # 3;
-    k := k - b / (a + 1);
-    ret -k + square(b);
-end
-
-... процедура с параметрами, цикл и ret; в конце
-fn show(s : text, n : number) -> void
-    repeat : n
-        project s;
-    end
-    ret;
-end
-
-... процедура без параметров и без ret
-fn hello() -> void
-    project 'hello';
-end
-
-... процедура с пустым телом
-fn nothing() -> void
-end
-
-... точка входа
-fn main() -> number
-    x : number;
-    y : number = 101b;
-    z : number = 7;
-    s : text = "строка";
-    q : text = 'say "hi"';
-    capture x;
-    capture s;
-    x := y * (x + 1) - 10 / 2 # 3;
-    y := answer();
-    project x;
-    project mix(x, y + 1, s);
-    project square(square(2));
-    show(s, 3);
-    hello();
-    nothing();
-    answer();
-    repeat : 3
-        project 'простой цикл';
-    end
-    repeat : x as i
-        project i;
-        repeat : y as j
-            project i + j;
-        end
-    end
-    repeat : 2
-    end
-    repeat : 2 as k
-    end
-    ret 0;
+fn f1(x:number,x1:number,x2:number,x3:number,x4:number,x5:number,x6:number,x7:number,x8:number,x9:number)->void
 end

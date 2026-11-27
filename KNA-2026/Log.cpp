@@ -2,6 +2,11 @@
 #include "IT.h"
 #include "LT.h"
 #include <iomanip>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include "MFST.h"
+#include "Polish.h"
 
 namespace Log {
 	LOG getlog(wchar_t logfile[]) {
@@ -71,25 +76,80 @@ namespace Log {
 		char buf[1024];
 		sprintf_s(buf, sizeof(buf), "\nИнформация об ошибке:\nID - %d,\nсообщение - %s,\nпозиция - %d,\nномер строки - %d",
 			error.id, error.messages, error.inext.col, error.inext.line);
-		WriteLine(log, buf, "");
+		*log.stream << buf;
 	}
-	void Log::WriteLexTable(LOG log, LT::LexTable& lextable)
-	{
-		int currentLine = 1;
-		*log.stream << "\n\nТаблица лексем:\n";
-		*log.stream << std::setw(2) << std::setfill('0') << currentLine << " ";
+
+	static std::string TypeName(IT::IDDATATYPE t) {
+		switch (t) {
+		case IT::NUM: return "NUMBER";
+		case IT::SMNUM: return "SMALLNUMBER";
+		case IT::TXT: return "TEXT";
+		case IT::VOID: return "VOID";
+		default: return "UNDEF";
+		}
+	}
+
+	static std::string KindName(IT::IDTYPE t) {
+		switch (t) {
+		case IT::V: return "VAR";
+		case IT::F: return "FUNC";
+		case IT::P: return "PARM";
+		case IT::L: return "LIT";
+		default: return "?";
+		}
+	}
+
+
+	// Дополнительный файл журнала: <журнал><ext> (спецификация, п. 2.3, таблица 2.3)
+	LOG getextra(LOG log, const wchar_t* ext) {
+		LOG extra;
+		std::wstring name = std::wstring(log.logfile) + ext;
+		extra.stream = new std::ofstream(name.c_str());
+		if (extra.stream->fail()) {
+			delete extra.stream;
+			ERROR_THROW(112);
+		}
+		wcsncpy_s(extra.logfile, PARM_MAX_SIZE, name.c_str(), _TRUNCATE);
+		return extra;
+	}
+
+	// Таблица лексем: номер строки и лексемы этой строки подряд; после лексемы с записью в ТИ - (idxTi).
+	// Формат по листингу 3.15 спецификации. Служебные '0' (место, освободившееся после ПОЛИЗ) не выводятся.
+	static void PrintLexemes(std::ofstream& out, LT::LexTable& lextable, bool polish) {
+		out << std::left << std::setw(8) << "СТРОКА" << "ЛЕКСЕМЫ";
+		int currentLine = -1;
 		for (int i = 0; i < lextable.size; i++) {
-			if (lextable.table[i].sn != currentLine) {
-				currentLine = lextable.table[i].sn;     
-				*log.stream << "\n";
-				*log.stream << std::setw(2) << std::setfill('0') << currentLine << " ";
+			LT::Entry ent = lextable.table[i];
+			if (ent.lexema == LEX_FILL) {
+				continue;
 			}
-			auto ent = LT::GetEntry(lextable, i);
-			*log.stream << ent.lexema;
+			if (ent.sn != currentLine) {
+				currentLine = ent.sn;
+				out << "\n" << std::left << std::setw(8) << ent.sn;
+			}
+			out << ent.lexema;
 			if (ent.idxTi != LT_TI_NULLIDX) {
-				*log.stream << "(" << ent.idxTi << ")";
+				out << "(" << ent.idxTi << ")";
+			}
+			if (polish && ent.lexema == LEX_PLUS) {
+				out << "(" << ent.op << ")";          // символ операции: + - * / #
+			}
+			if (polish && ent.lexema == LEX_AT) {
+				out << ent.params;                     // число аргументов вызова
+			}
+			if (polish && ent.lexema == LEX_NUMBER) {
+				out << "(" << TypeName((IT::IDDATATYPE)ent.op) << ")";   // целевой тип преобразования
 			}
 		}
+		out << "\n";
+	}
+
+	// Таблица лексем -> файл <журнал>.lex (п. 3.5.2 спецификации)
+	void WriteLexTable(LOG log, LT::LexTable& lextable)
+	{
+		LOG f = getextra(log, L".lex");
+		PrintLexemes(*f.stream, lextable,false);
+		Close(f);
 	}
 
 	void WriteWarning(LOG log, Error::ERROR warning) {
@@ -100,87 +160,79 @@ namespace Log {
 			<< ",номер строки - " << warning.inext.line << ",номер столбца - " << warning.inext.col;
 	}
 
-	void Log::WriteIdTable(LOG log, IT::IdTable& idtable)
+	// Таблица идентификаторов -> файл <журнал>.id (п. 3.5.3, таблица 3.11 спецификации):
+	// одна строка на запись, значение - последним столбцом, чтобы длинные литералы не сдвигали остальные
+	void WriteIdTable(LOG log, IT::IdTable& idtable)
 	{
-		int currentLine = 1;
-		*log.stream << "\n\nТаблица идентификаторов:\n";
-		*log.stream << "ИМЯ" << "ТИП" << "ИНДЕКС_ТЛ" << "ЗНАЧЕНИЕ" << "ОБЛ_ВИДИМОСТИ\n";
+		LOG f = getextra(log, L".id");
+		std::ofstream& out = *f.stream;
+		out << std::left << std::setfill(' ')
+			<< std::setw(5) << "№" << std::setw(34) << "ИМЯ" << std::setw(8) << "ТИП" << std::setw(6) << "ВИД"
+			<< std::setw(11) << "ИНДЕКС_ТЛ" << std::setw(20) << "ОБЛАСТЬ_ВИДИМОСТИ" << "ЗНАЧЕНИЕ" << "\n";
 		for (int i = 0; i < idtable.size; i++) {
-			IT::Entry ent = IT::GetEntry(idtable, i);
-			*log.stream << ent.id << ", ";
-			switch (ent.iddatatype) {
-			case IT::INT: {
-				*log.stream << "NUMBER";
-				break;
-			}
-			case IT::STR: {
-				*log.stream << "TEXT";
-				break;
-			}
-			case IT::VOID: {
-				*log.stream << "VOID";
-				break;
-			}
-			case IT::UNDEF: {
-				*log.stream << "UNDEF";
-				break;
-			}
-			}
-
-			*log.stream << ", ";
-
-			switch (ent.idtype) {
-			case IT::V: {
-				*log.stream << "VAR";
-				break;
-			}
-			case IT::F: {
-				*log.stream << "FUNC";
-				break;
-			}
-			case IT::P: {
-				*log.stream << "PARM";
-				break;
-			}
-			case IT::L: {
-				*log.stream << "LIT";
-				break;
-			}
-			}
-
-			*log.stream << ", " << ent.idxfirstLE << ", ";
-
-
-
+			IT::Entry ent = idtable.table[i];
+			std::string value;
 			if (ent.idtype == IT::F) {
-				*log.stream << "Число параметров функции: " << ent.value.vfunc.paramCount;
-				for (int j = 0; j < ent.value.vfunc.paramCount && j < TI_MAXPARAMS; j++) {
-					*log.stream << (j == 0 ? " (" : ", ")
-						<< (ent.value.vfunc.types[j] == IT::INT ? "NUMBER" : ent.value.vfunc.types[j] == IT::STR ? "TEXT" : "UNDEF");
+				int n = ent.value.vfunc.paramCount;
+				if (n < 0) {
+					value = "-";
 				}
-				if (ent.value.vfunc.paramCount > 0) *log.stream << ")";
+				else {
+					value = "параметров: " + std::to_string(n);
+					for (int j = 0; j < n && j < TI_MAXPARAMS; j++) {
+						value += (j == 0 ? " (" : ", ");
+						value += TypeName(ent.value.vfunc.types[j]);
+					}
+					if (n > 0) {
+						value += ")";
+					}
+				}
 			}
-			else
-				switch (ent.iddatatype) {
-				case IT::INT: {
-					*log.stream << ent.value.vint.val;
-					break;
+			else if (ent.iddatatype == IT::NUM || ent.iddatatype == IT::SMNUM) {
+				value = std::to_string(ent.value.vint.val);
+				if (ent.idtype == IT::L && ent.value.vint.overflow) {
+					value += " (переполнение)";
 				}
-				case IT::STR: {
-					if (ent.value.vstr.len == 0) {
-						*log.stream << "NULL";
-					}
-					for (int j = 0; ent.value.vstr.str[j] != '\0'; j++)
-					{
-						*log.stream << ent.value.vstr.str[j];
-					}
-					break;
+			}
+			else if (ent.iddatatype == IT::TXT) {
+				if (ent.idtype == IT::L) {
+					value = ent.value.vstr.len == 0 ? "(пусто)" : std::string(ent.value.vstr.str, ent.value.vstr.len);
 				}
+				else {
+					value = "NULL";
 				}
-			*log.stream << ", " << (ent.scope == "" ? "global" : ent.scope);
-
-			*log.stream << std::endl;
+			}
+			else {
+				value = "-";
+			}
+			out << std::setw(5) << i << std::setw(34) << ent.id << std::setw(8) << TypeName(ent.iddatatype)
+				<< std::setw(6) << KindName(ent.idtype) << std::setw(11) << ent.idxfirstLE
+				<< std::setw(20) << (ent.scope.empty() ? "global" : ent.scope) << value << "\n";
 		}
+		Close(f);
+	}
+
+	// Правила грамматики, применённые при разборе -> файл <журнал>.rules (п. 2.3 спецификации):
+	// порядковый номер и правило. Вызывать после успешного mfst.start().
+	void WriteSyntaxRules(LOG log, MFST::Mfst& mfst)
+	{
+		LOG f = getextra(log, L".rules");
+		char buf[205];
+		for (unsigned short k = 0; k < mfst.storestate.size(); k++) {
+			MFST::MfstState state = mfst.storestate.c[k];
+			GRB::Rule rule = mfst.grebach.getRule(state.nrule);
+			*f.stream << std::left << std::setw(6) << k + 1 << rule.getCRule(buf, state.nrulechain) << "\n";
+		}
+		Close(f);
+	}
+
+	// ПОЛИЗ -> файл <журнал>.pol: та же таблица лексем после преобразования выражений;
+	// после v - символ операции в скобках, после @ - число аргументов, после t - целевой тип
+	void WritePolish(LOG log, LT::LexTable& lextable)
+	{
+		LOG f = getextra(log, L".pol");
+		PrintLexemes(*f.stream, lextable, true);
+		Close(f);
 	}
 
 	void Close(LOG log) {

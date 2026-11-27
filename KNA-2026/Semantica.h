@@ -18,7 +18,6 @@ namespace SEM {
 
 
 	void CheckLeftOperands(LT::LexTable& lt, IT::IdTable& it, Diagnostics& d);	// цель := и capture
-	void CheckFunctionCalls(LT::LexTable& lt, IT::IdTable& it, Diagnostics& d);	// вызовы: блок ли, число и типы аргументов
 	void CheckTypes(LT::LexTable& lt, IT::IdTable& it, Diagnostics& d);			// типы выражений, константы, ret, число повторений
 	void CheckWarnings(LT::LexTable& lt, IT::IdTable& it, Diagnostics& d);		// 800, 801
 

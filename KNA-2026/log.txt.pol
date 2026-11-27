@@ -1,0 +1,9 @@
+ÑÒÐÎÊÀ  ËÅÊÑÅÌÛ
+1       fm(2)()>t(NUMBER)
+2       i(3):t(TEXT)=l(4);
+3       i(5):t(SMALLNUMBER);
+4       i(5)~i(3);
+5       rl(6);
+6       e
+8       fi(7)(i(8):t(NUMBER),i(9):t(NUMBER),i(10):t(NUMBER),i(11):t(NUMBER),i(12):t(NUMBER),i(13):t(NUMBER),i(14):t(NUMBER),i(15):t(NUMBER),i(16):t(NUMBER),i(17):t(NUMBER))>d
+9       e

@@ -4,11 +4,12 @@
 #include <iostream>
 #include "GRB.h"
 #include "Lexer.h"
+#include "Log.h"
 
 #define MFST_DIAGN_MAXSIZE (2*ERROR_MAXSIZE_MESSAGE)
 #define MFST_DIAGN_NUMBER 3
 
-#define MFST_TRACE_START std::cout << std::setfill(' ') \
+#define MFST_TRACE_START (*trace) << std::setfill(' ') \
     << std::setw(4)  << std::left << "Шаг" << ":" \
     << std::setw(20) << std::left << " Правило" \
     << std::setw(30) << std::left << " Входная лента" \
@@ -16,8 +17,7 @@
     << std::endl;
 
 // стек автомата; using ...::c открывает доступ к внутреннему контейнеру (нужен для getCSt)
-class MFSTSTSTACK : public std::stack<short> {
-public:
+struct MFSTSTSTACK : public std::stack<short> {
     using std::stack<short>::c;
 };
 
@@ -43,9 +43,8 @@ namespace MFST
         );
     };
 
-    // стек сохранённых состояний; using ...::c нужен для printrules и savededucation
-    class MFSTSTATE : public std::stack<MfstState> {
-    public:
+    // стек сохранённых состояний; using ...::c нужен для savededucation
+    struct MFSTSTATE : public std::stack<MfstState> {
         using std::stack<MfstState>::c;
     };
 
@@ -86,6 +85,7 @@ namespace MFST
         LEX::lexer lex;                     // результат работы лексического анализатора
         MFSTSTSTACK st;                     // стек автомата
         MFSTSTATE storestate;               // стек для сохранения состояний
+        std::ofstream* trace;               // файл трассировки <журнал>.trace
 
         Mfst();
         Mfst(
@@ -102,11 +102,10 @@ namespace MFST
             GRB::Rule::Chain chain                              // цепочка правила
         );
         RC_STEP step();                                         // выполнить шаг автомата
-        bool start();                                           // запустить автомат
+        bool start(Log::LOG log);                               // запустить автомат, трассировка пишется в log.stream
         bool savediagnosis(
             RC_STEP pprc_step                                   // код завершения шага
         );
-        void printrules();                                      // вывести последовательность правил
 
         struct Deducation                                       // вывод
         {
